@@ -1,0 +1,11 @@
+var BANK_SAMPAH_JSON = {
+"type": "FeatureCollection",
+"name": "BANK_SAMPAH_1",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": null }, "geometry": { "type": "Point", "coordinates": [ 110.362585693972775, -7.784147969698735 ] } },
+{ "type": "Feature", "properties": { "id": null }, "geometry": { "type": "Point", "coordinates": [ 110.362147525430842, -7.78762040840246 ] } },
+{ "type": "Feature", "properties": { "id": null }, "geometry": { "type": "Point", "coordinates": [ 110.361798064476091, -7.785260346663192 ] } }
+]
+};
+
