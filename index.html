@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Leaflet Web Map 2</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" 
+        integrity="sha512xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin="">
+    </script>
+
+    <!-- BAGIAN FILE GEOJSON JADI JS -->
+    <script src="data/BANGUNAN.js"></script>
+    <script src="data/BANK_SAMPAH.js"></script>
+    <script src="data/BATAS_RT.js"></script>
+    <script src="data/BATAS_RW.js"></script>
+    <script src="data/FASILITAS_UMUM.js"></script>
+    <script src="data/JALAN_PLG.js"></script>
+    <script src="data/JALAN.js"></script>
+    <script src="data/LAND_COVER.js"></script>
+    <script src="data/TITIK_SAMPAH.js"></script>
+    <script src="data/UMKM.js"></script>
+    <script src="data/VEGETASI.js"></script>
+
+    <style>
+        #map {
+            height: calc(100vh - 60px);
+        }
+    </style>
+</head>
+ 
+<body> 
+
+    <!-- BAGIAN NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" 
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+       
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>       
+        </ul>
+        
+        <form class="form-inline my-2 my-lg-0">        
+            <button class="btn btn-outline-success my-2 my-sm-0">
+                Lokasi saya
+            </button>
+        </form>
+        </div>
+    </nav>
+
+    <div id="map"></div>
+
+    <script>
+        // BAGIAN PETA
+        var map = L.map('map', {center: [-7.785967258185019, 110.36128775331159], zoom: 17});
+        
+        // BAGIAN LAYER BASEMAP
+        var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' 
+            }).addTo(map); 
+
+        var carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        });
+
+        var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        });
+
+        var baseMaps = { 
+            "Citra Satelit": esri, 
+            "Peta Carto": carto,
+            "OSM": OpenStreetMap_Mapnik,
+            };
+        
+        // BAGIAN LAYER FITUR
+        var bangunanLayer = L.geoJSON(BANGUNAN_JSON,{ 
+            style: function(feature) { 
+                switch (feature.properties.TIPE) { 
+                    case 'GEDUNG': return {fillColor: "#f874ac", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'TEMPAT TINGGAL': return {fillColor: "#ffccbc", color: "black", fillOpacity: 1, weight: 1}; 
+                } 
+            }, 
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'Jenis Bangunan ' + '<strong>' + feature.properties.TIPE + '</strong>' 
+                ); 
+            } 
+        });
+
+        var banksampahLayer = L.geoJSON(BANK_SAMPAH_JSON,{ 
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 5,          // ukuran titik
+                    fillColor: "brown", // warna isi
+                    color: "black",      // outline
+                    weight: 1,          // tebal outline
+                    opacity: 1, 
+                    fillOpacity: 0.8
+                });
+            },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'BANK SAMPAH'
+                ); 
+            } 
+        });
+        
+        var batasrtLayer = L.geoJSON(BATAS_RT_JSON,{ 
+            style: {
+                color: "red",
+                weight: 1,
+                fillOpacity: 0
+                },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'Batas RT ' + '<strong>' + feature.properties.id + '</strong>' 
+                ); 
+            } 
+        });
+        
+        var batasrwLayer = L.geoJSON(BATAS_RW_JSON,{ 
+            style: {
+                color: "yellow",
+                weight: 1,
+                fillOpacity: 0
+                },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'Batas RW ' + '<strong>' + feature.properties.id + '</strong>' 
+                ); 
+            } 
+        });
+
+        var fasumLayer = L.geoJSON(FASUM_JSON,{ 
+            pointToLayer: function (feature, latlng) {
+                let fillColor;
+                    switch (feature.properties.JENIS) {
+                        case 'Balai Pertemuan': 
+                            fillColor = "#f9e612"; 
+                            break;
+                        case 'Bank': 
+                            fillColor = "blue"; 
+                            break;
+                        case 'Fasilitas Sosial': 
+                            fillColor = "#499723"; 
+                            break;
+                        case 'Hotel/Motel/Wisma': 
+                            fillColor = "#f912ea"; 
+                            break;
+                        case 'Kantor Pemerintahan': 
+                            fillColor = "#d5b43c"; 
+                            break;
+                        case 'Militer': 
+                            fillColor = "#04a20f"; 
+                            break;
+                        case 'Pendidikan': 
+                            fillColor = "brown"; 
+                            break;
+                        case 'Peribadatan': 
+                            fillColor = "red"; 
+                            break;
+                        case 'Posyandu': 
+                            fillColor = "#f498d9"; 
+                            break;
+                        case 'Puskesmas': 
+                            fillColor = "#8acf99"; 
+                            break;
+                        default: 
+                            fillColor = "white"; // warna default kalau tidak ada yang cocok
+                    }
+                return L.circleMarker(latlng, {
+                    radius: 5,          // ukuran titik
+                    fillColor: fillColor, // warna isi
+                    color: "black",      // outline
+                    weight: 1,          // tebal outline
+                    opacity: 1, 
+                    fillOpacity: 0.8
+                });
+            },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( feature.properties.NAMA + "<br>" + '<strong>' + feature.properties.JENIS + '</strong>'
+                ); 
+            } 
+        });
+
+        var jalanLayer = L.geoJSON(JALAN_JSON,{ 
+            style: {
+                color: "black",
+                weight: 1,
+                fillOpacity: 1
+                },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup(
+                ); 
+            } 
+        });
+
+        var jalanPLGLayer = L.geoJSON(JALAN_PLG_JSON,{ 
+            style: function(feature) { 
+                switch (feature.properties.tipe) { 
+                    case 'LOKAL': return {fillColor: "#f89c6c", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'KOLEKTOR': return {fillColor: "#ffc4dc", color: "black", fillOpacity: 1, weight: 1}; 
+                } 
+            }, 
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'Jenis Jalan ' + '<strong>' + feature.properties.tipe + '</strong>' 
+                ); 
+            } 
+        });
+
+        var landcoverLayer = L.geoJSON(LAND_COVER_JSON,{ 
+            style: function(feature) { 
+                switch (feature.properties.JENIS) { 
+                    case 'PEMUKIMAN': return {fillColor: "#ffdc04", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'PERNIAGAAN': return {fillColor: "#ffccd4", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'PEMERINTAHAN': return {fillColor: "#c89c7c", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'VEGETASI': return {fillColor: "#c0fca4", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'HANKAM': return {fillColor: "#c8c46c", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'PENDIDIKAN': return {fillColor: "#e0cca4", color: "black", fillOpacity: 1, weight: 1}; 
+                    case 'PERIBADATAN': return {fillColor: "#a4a8bc", color: "black", fillOpacity: 1, weight: 1}; 
+                } 
+            }, 
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'Jenis Kawasan ' + '<strong>' + feature.properties.JENIS + '</strong>' 
+                ); 
+            } 
+        });
+
+        var vegetasiLayer = L.geoJSON(VEGETASI_JSON,{ 
+            style: {
+                color: "green",
+                weight: 1,
+                fillOpacity: 0.7
+                }
+        });
+
+        var UMKMLayer = L.geoJSON(UMKM_JSON,{ 
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 5,          // ukuran titik
+                    fillColor: "red", // warna isi
+                    color: "black",      // outline
+                    weight: 1,          // tebal outline
+                    opacity: 1, 
+                    fillOpacity: 0.8
+                });
+            },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( '<strong>' + feature.properties.Nama_Usaha + '</strong>' + "<br>" + feature.properties.Alamat_Ush + "<br>" + feature.properties.KBLI + "<br> NIB " + feature.properties.NIB
+                ); 
+            } 
+        });
+
+        var titiksampahLayer = L.geoJSON(TITIK_SAMPAH_JSON,{ 
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 5,          // ukuran titik
+                    fillColor: "red", // warna isi
+                    color: "black",      // outline
+                    weight: 1,          // tebal outline
+                    opacity: 1, 
+                    fillOpacity: 0.8
+                });
+            },
+            onEachFeature: function (feature, layer) { 
+                layer.bindPopup( 'Titik Sampah' 
+                ); 
+            } 
+        });
+
+        // BAGIAN OVERLAY
+        var overlayMaps = {
+            "Batas RT": batasrtLayer,
+            "Batas RW": batasrwLayer,
+            "Tutupan Lahan": landcoverLayer,
+            "Area Vegetasi": vegetasiLayer,
+            "Bangunan": bangunanLayer,
+            "Fasilitas Umum": fasumLayer,
+            "Titik UMKM": UMKMLayer,
+            "Titik Bank Sampah": banksampahLayer,
+            "Titik Sampah Liar": titiksampahLayer,
+            "Jalan Utama": jalanPLGLayer,
+            "Jalan Setapak": jalanLayer
+            };
+
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    </script>
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous">      
+    </script>
+
+</body>
+ 
+</html>
